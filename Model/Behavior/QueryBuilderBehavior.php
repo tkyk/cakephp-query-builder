@@ -62,13 +62,14 @@ class QueryBuilderBehavior extends ModelBehavior {
  * @return array
  */
 	public function getQueryOptions($model, $name) {
-		if (!isset($model->queryOptions) ||
+		if (
+			!isset($model->queryOptions) ||
 			!isset($model->queryOptions[$name]) ||
-			!is_array($model->queryOptions[$name])) {
-				$model->cakeError('error',
-					$this->_missingOptionsError($name));
-				return;
-			}
+			!is_array($model->queryOptions[$name])
+		) {
+			$model->cakeError('error', $this->_missingOptionsError($name));
+			return;
+		}
 		return $model->queryOptions[$name];
 	}
 
@@ -153,5 +154,6 @@ class QueryBuilderBehavior extends ModelBehavior {
 		}
 		return $exp;
 	}
+
 }
 

@@ -183,7 +183,7 @@ class QueryOptions extends Object {
 			if (strpos($f, '(') !== false || strpos($f, '.') !== false) {
 				$fields[] = $f;
 			} else {
-				$fields[] = $model .".". $f;
+				$fields[] = $model . "." . $f;
 			}
 		}
 		return $this->fields($fields);
@@ -252,26 +252,26 @@ class QueryOptions extends Object {
  */
 	public function __call($method, $args) {
 		switch(true) {
-		case preg_match('/^([A-Z][a-zA-Z0-9]*)?_([a-zA-Z0-9_]+)$/', $method, $m):
-			$alias = $m[1];
-			if ($alias == 'Alias') {
-				$alias = strval($this->getAlias());
-			}
-			$model = empty($alias) ? "" : $alias .".";
-			$field = $model . $m[2];
-			return count($args) == 2 ? 
-				$this->addCondition($field, $args[0], $args[1]) :
-				$this->addCondition($field, $args[0]);
+			case preg_match('/^([A-Z][a-zA-Z0-9]*)?_([a-zA-Z0-9_]+)$/', $method, $m):
+				$alias = $m[1];
+				if ($alias == 'Alias') {
+					$alias = strval($this->getAlias());
+				}
+				$model = empty($alias) ? "" : $alias . ".";
+				$field = $model . $m[2];
+				return count($args) == 2 ?
+					$this->addCondition($field, $args[0], $args[1]) :
+					$this->addCondition($field, $args[0]);
 
-		case preg_match('/^fields_([A-Z][a-zA-Z0-9]*)$/', $method, $m):
-			return $this->modelFields($m[1], $args);
+			case preg_match('/^fields_([A-Z][a-zA-Z0-9]*)$/', $method, $m):
+				return $this->modelFields($m[1], $args);
 
-		case $this->isKeyDefined($method):
-			if (isset($this->_appendKeys[$method])) {
-				return $this->addOption($method, $args, $this->_appendKeys[$method]);
-			} else {
-				return $this->setOption($method, $args);
-			}
+			case $this->isKeyDefined($method):
+				if (isset($this->_appendKeys[$method])) {
+					return $this->addOption($method, $args, $this->_appendKeys[$method]);
+				} else {
+					return $this->setOption($method, $args);
+				}
 		}
 		return $this->_keyNotDefined($method, $args);
 	}
@@ -319,6 +319,7 @@ class QueryOptions extends Object {
 		}
 		return $this->_options[$key];
 	}
+
 }
 
 
@@ -355,6 +356,7 @@ class ScopedQueryOptions extends QueryOptions {
 		$this->_scope->dispatchMethod($method, $args);
 		return $this;
 	}
+
 }
 
 
@@ -365,6 +367,7 @@ class ScopedQueryOptions extends QueryOptions {
  * @package Finder
  */
 class QueryMethod extends ScopedQueryOptions {
+
 /**
  * @var object  Model; acts as QueryBuilder
  */
@@ -577,7 +580,7 @@ class SubqueryExpression extends ScopedQueryOptions {
 		$dbo = $this->_model->getDataSource();
 		$options = am($this->subqueryDefaults, $this->_options);
 		$sql = $dbo->buildStatement($options, $this->_model);
-		return $sql;        
+		return $sql;
 	}
 
 /**
@@ -586,7 +589,7 @@ class SubqueryExpression extends ScopedQueryOptions {
  * @return value
  */
 	public function __toString() {
-		return "(". $this->toSql() .")";
+		return "(" . $this->toSql() . ")";
 	}
 
 /**
@@ -604,5 +607,6 @@ class SubqueryExpression extends ScopedQueryOptions {
 			return $ref;
 		}
 	}
+
 }
 
