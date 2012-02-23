@@ -1,17 +1,17 @@
 <?php
 
 App::import('Lib', 'QueryBuilder.QueryOptions');
-Mock::generate('Object');
 
 class QueryOptionsTestCase extends CakeTestCase {
     var $options;
 
-    function startTest() {
+    function setUp() {
+		parent::setUp();
         $this->options = new QueryOptions();
     }
 
-    function endTest() {
-        ClassRegistry::flush();
+    function tearDown() {
+		parent::tearDown();
     }
 
     function testInit() {
@@ -165,11 +165,11 @@ class QueryOptionsTestCase extends CakeTestCase {
 
         // with array == without array
         $a->clearOptions();
-        $a->addOption('conditions', a($one));
+        $a->addOption('conditions', array($one));
         $expected['conditions'] = $one;
         $this->assertEqual($expected, $a->getOptions());
 
-        $a->addOption('conditions', a($or));
+        $a->addOption('conditions', array($or));
         $expected['conditions'] = am(array($one), $or);
         $this->assertEqual($expected, $a->getOptions());
 
@@ -181,17 +181,17 @@ class QueryOptionsTestCase extends CakeTestCase {
         $this->assertEqual($expected, $a->getOptions());
 
         $a->addOption('conditions', $or, false);
-        $expected['conditions'] = am(a($one), $or);
+        $expected['conditions'] = am(array($one), $or);
         $this->assertEqual($expected, $a->getOptions());
 
         // with array
         $a->clearOptions();
-        $a->addOption('conditions', a($one), false);
-        $expected['conditions'] = a($one);
+        $a->addOption('conditions', array($one), false);
+        $expected['conditions'] = array($one);
         $this->assertEqual($expected, $a->getOptions());
 
-        $a->addOption('conditions', a($or), false);
-        $expected['conditions'] = am(a($one), a($or));
+        $a->addOption('conditions', array($or), false);
+        $expected['conditions'] = am(array($one), array($or));
         $this->assertEqual($expected, $a->getOptions());
 
     }
@@ -326,8 +326,8 @@ class QueryOptionsTestCase extends CakeTestCase {
     function testModelFields() {
         $a = $this->options;
         
-        $a  ->modelFields('Post', a('id', 'foo_bar', 'col AS alias'))
-            ->modelFields('Post', a('(1)', 'SUM(e)', 'Group.name', "'('"));
+        $a  ->modelFields('Post', array('id', 'foo_bar', 'col AS alias'))
+            ->modelFields('Post', array('(1)', 'SUM(e)', 'Group.name', "'('"));
 
         $this->assertEqual(array('fields'
                                  => array('Post.id', 'Post.foo_bar', 'Post.col AS alias',
@@ -379,6 +379,7 @@ class QueryOptionsTestCase extends CakeTestCase {
         }
 
         $expected = $values;
+		$expected['fields'] = array($expected['fields']);
         $this->assertEqual($expected, $a->getOptions());
     }
 
@@ -424,8 +425,8 @@ class QueryOptionsTestCase extends CakeTestCase {
             ->Group_name('!=', "xxx")
             ->conditions(array('or' => array('a is null',
                                              'a' => '')))
-            ->_id(a(1,2,3))
-            ->_title_field("NOT IN", a('xxx', 'yyy'));
+            ->_id(array(1,2,3))
+            ->_title_field("NOT IN", array('xxx', 'yyy'));
 
         $conditions = array('Post.id' => 3,
                             'Post.foo_bar IS NULL',
