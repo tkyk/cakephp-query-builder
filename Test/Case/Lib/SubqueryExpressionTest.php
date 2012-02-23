@@ -2,8 +2,11 @@
 
 App::import('Lib', 'QueryBuilder.QueryOptions');
 App::import('Datasource', 'DboSource');
+App::uses('Model', 'Model');
+/*
 Mock::generate('Model');
 Mock::generate('DboSource');
+ */
 
 class TestModelForSubqueryExpressionTestCase extends Model {
     var $useTable = false;
@@ -18,16 +21,30 @@ class SubqueryExpressionTestCase extends CakeTestCase {
     var $model, $dbo;
     var $q;
 
-    function startTest() {
-        $this->dbo = new MockDboSource();
-        $this->model = new MockModel();
-        $this->model->setReturnReference('getDataSource', $this->dbo);
+	private $_beforeErrorLevel;
+
+    function setUp() {
+		parent::setUp();
+		//disable E_STRICT warnigs related to Mock
+		$this->_beforeErrorLevel = error_reporting();
+		error_reporting(E_ALL & ~E_STRICT);
+
+		$this->dbo = $this->getMockBuilder('DboSource')
+			->disableOriginalConstructor()
+			->getMock();
+		$this->model = $this->getMockBuilder('Model')
+			->disableOriginalConstructor()
+			->getMock();
+		$this->model->expects($this->any())
+			->method('getDataSource')
+			->will($this->returnValue($this->dbo));
         $this->q = new SubqueryExpression($this->model);
     }
 
-    function endTest() {
-        ClassRegistry::flush();
-    }
+	function tearDown() {
+		error_reporting($this->_beforeErrorLevel);
+		parent::tearDown();
+	}
 
     function testInit() {
         $this->assertIsA($this->q, 'QueryOptions');
@@ -59,17 +76,10 @@ class SubqueryExpressionTestCase extends CakeTestCase {
 
         $sql = 'SELECT User2.id FROM users2 AS User2 ....';
 
-        $this->model->expectCallCount('getDataSource', 3);
-        $this->dbo->expectCallCount('buildStatement', 3);
-        $this->dbo->setReturnValue('buildStatement', $sql);
-        
-        $this->dbo->expectAt(0, 'buildStatement',
-                             array($expectedOptions,
-                                   '*' /* This wildcard is required to avoid recursive comparison */));
-        $this->dbo->expectAt(1, 'buildStatement',
-                             array($expectedOptions,
-                                   '*' /* This wildcard is required to avoid recursive comparison */));
-
+		$this->dbo->expects($this->exactly(3))
+			->method('buildStatement')
+			->with($expectedOptions, $this->model)
+			->will($this->returnValue($sql));
         $this->q
             ->table('users')
             ->alias('User2')
