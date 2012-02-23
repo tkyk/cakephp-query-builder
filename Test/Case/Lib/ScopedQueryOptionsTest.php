@@ -17,7 +17,8 @@ class __ScopeObject extends Object {
 class ScopedQueryOptionsTest extends CakeTestCase {
     var $options, $scope;
 
-    function startTest($m) {
+    function setUp() {
+		parent::setUp();
         $this->scope = new __ScopeObject();
         $this->options = new ScopedQueryOptions($this->scope);
     }
