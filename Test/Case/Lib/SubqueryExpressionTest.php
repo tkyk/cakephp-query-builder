@@ -47,20 +47,20 @@ class SubqueryExpressionTestCase extends CakeTestCase {
 	}
 
     function testInit() {
-        $this->assertIsA($this->q, 'QueryOptions');
+        $this->assertInstanceOf('QueryOptions', $this->q);
         $this->assertTrue(isset($this->q->type));
-        $this->assertEqual('expression', $this->q->type);
+        $this->assertEquals('expression', $this->q->type);
     }
 
     function testGetAlias() {
         $q = $this->q;
-        $this->assertIdentical("", $q->getAlias());
+        $this->assertSame("", $q->getAlias());
 
         $q->tableOrAlias('QueryName');
-        $this->assertIdentical('QueryName', $q->getAlias());
+        $this->assertSame('QueryName', $q->getAlias());
 
         $q->Alias_id(3);
-        $this->assertIdentical(array('QueryName.id' => 3),
+        $this->assertSame(array('QueryName.id' => 3),
                                $q->conditions);
     }
 
@@ -87,9 +87,9 @@ class SubqueryExpressionTestCase extends CakeTestCase {
             ->limit(10)
             ->User2_status('A');
 
-        $this->assertEqual($sql, $this->q->toSql());
-        $this->assertEqual("(". $sql .")", $this->q->__toString());
-        $this->assertEqual("(". $sql .")", $this->q->value);
+        $this->assertEquals($sql, $this->q->toSql());
+        $this->assertEquals("(". $sql .")", $this->q->__toString());
+        $this->assertEquals("(". $sql .")", $this->q->value);
     }
 
     function testTableOrAlias() {
@@ -98,17 +98,17 @@ class SubqueryExpressionTestCase extends CakeTestCase {
         $this->assertNull($q->table);
         $this->assertNull($q->alias);
 
-        $this->assertIdentical($q, $q->tableOrAlias('users'));
-        $this->assertIdentical('users', $q->table);
+        $this->assertSame($q, $q->tableOrAlias('users'));
+        $this->assertSame('users', $q->table);
         $this->assertNull($q->alias);
 
-        $this->assertIdentical($q, $q->tableOrAlias('groups_users'));
-        $this->assertIdentical('groups_users', $q->table);
+        $this->assertSame($q, $q->tableOrAlias('groups_users'));
+        $this->assertSame('groups_users', $q->table);
         $this->assertNull($q->alias);
 
-        $this->assertIdentical($q, $q->tableOrAlias('GroupsUser'));
-        $this->assertIdentical('groups_users', $q->table);
-        $this->assertIdentical('GroupsUser', $q->alias);
+        $this->assertSame($q, $q->tableOrAlias('GroupsUser'));
+        $this->assertSame('groups_users', $q->table);
+        $this->assertSame('GroupsUser', $q->alias);
 
         
     }
@@ -117,8 +117,8 @@ class SubqueryExpressionTestCase extends CakeTestCase {
         $m = new TestModelForSubqueryExpressionTestCase;
         $q = new SubqueryExpression($m);
 
-        $this->assertIdentical($q, $q->limitDouble(100));
-        $this->assertIdentical(200, $q->limit);
+        $this->assertSame($q, $q->limitDouble(100));
+        $this->assertSame(200, $q->limit);
     }
 
 }

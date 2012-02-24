@@ -112,8 +112,8 @@ class DbQueryBuilderTestCase extends CakeTestCase {
     }
 
     function testInit() {
-        $this->assertIdentical(0, $this->Post->find('count'));
-        $this->assertIdentical(0, $this->Category->find('count'));
+        $this->assertSame(0, $this->Post->find('count'));
+        $this->assertSame(0, $this->Category->find('count'));
 
         $this->assertTrue($this->Post->Behaviors->attached('QueryBuilder'));
         $this->assertTrue($this->Category->Behaviors->attached('QueryBuilder'));
@@ -123,19 +123,19 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         $C = $this->Category;
         $this->_insertDefaultCategories();
 
-        $this->assertIdentical(4, $C->finder('count')->invoke());
-        $this->assertIdentical(4, $C->find('count'));
+        $this->assertSame(4, $C->finder('count')->invoke());
+        $this->assertSame(4, $C->find('count'));
 
         $ret = $C->finder('first')->Category_name('PHP')->invoke();
-        $this->assertEqual('PHP', $ret['Category']['name']);
-        $this->assertEqual(1, $ret['Category']['flag']);
+        $this->assertEquals('PHP', $ret['Category']['name']);
+        $this->assertEquals(1, $ret['Category']['flag']);
         
 
         $ret = $C->finder('all')
             ->Category_name('like', 'P%')
             ->order('id DESC')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('Python', 'Perl', 'PHP'), $ret);
+        $this->assertEquals(array('Python', 'Perl', 'PHP'), $ret);
 
         $ret = $C->finder('list')
             ->fields_Category('name', 'flag')
@@ -143,7 +143,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->Alias_flag(array(0,1))
             ->order('name DESC')
             ->invoke();
-        $this->assertEqual(array('Ruby' => 1, 'Perl' => 0), $ret);
+        $this->assertEquals(array('Ruby' => 1, 'Perl' => 0), $ret);
 
         $ret = $C->finder('all')
             ->fields('Category.flag', 'COUNT(*) AS cnt')
@@ -152,16 +152,16 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->limit(1)
             ->invoke();
         
-        $this->assertEqual(array(array('Category' => array('flag' => 0),
+        $this->assertEquals(array(array('Category' => array('flag' => 0),
                                        0 => array('cnt' => 1))),
                            $ret);
 
 
         $counter = $C->finder('count');
-        $this->assertIdentical(1, $counter->Category_flag(0)->invoke());
+        $this->assertSame(1, $counter->Category_flag(0)->invoke());
         $counter->conditions['Category.flag'] = 1;
-        $this->assertIdentical(3, $counter->invoke());
-        $this->assertIdentical(2, $counter->_name('like', 'P%')->invoke());
+        $this->assertSame(3, $counter->invoke());
+        $this->assertSame(2, $counter->_name('like', 'P%')->invoke());
     }
 
     function testPaginator() {
@@ -171,7 +171,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
                              'flag' => $i % 3 == 0));
             $C->save();
         }
-        $this->assertEqual(26, $C->find('count'));
+        $this->assertEquals(26, $C->find('count'));
 
         $cntl = $this->_getController('/foo/bar');
         $cntl->loadModel('Category');
@@ -180,12 +180,12 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->limit(3)
             ->order('name DESC');
         $ret = $paginator->invoke('extract', '/Category/name');
-        $this->assertEqual(array('Z', 'Y', 'X'), $ret);
+        $this->assertEquals(array('Z', 'Y', 'X'), $ret);
 
 
 		$cntl->request->params['named']['page'] = 2;
         $ret = $paginator->invoke('extract', '/Category/name');
-        $this->assertEqual(array('W', 'V', 'U'), $ret);
+        $this->assertEquals(array('W', 'V', 'U'), $ret);
 
 
         $ret = $C->paginator($cntl->Paginator)
@@ -193,7 +193,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->limit(3)
             ->order('name ASC')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('J', 'M', 'P'), $ret);
+        $this->assertEquals(array('J', 'M', 'P'), $ret);
     }
 
     function testSubquery() {
@@ -220,7 +220,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         $cnt = $P->finder('count')
             ->Post_category_id($phpCate)
             ->invoke();
-        $this->assertEqual(2, $cnt);
+        $this->assertEquals(2, $cnt);
 
 
         // IN
@@ -231,7 +231,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         $cnt = $P->finder('count')
             ->conditions("Post.category_id IN ". $phpOrPython)
             ->invoke();
-        $this->assertEqual(3, $cnt);
+        $this->assertEquals(3, $cnt);
 
 
         // ALL and joins
@@ -249,7 +249,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->order('Post.title ASC')
             ->invoke('extract', '/Post/title');
 
-        $this->assertEqual(array('Django', 'RubyOnRails', 'Sinatra'), $newerThanPHPPosts);
+        $this->assertEquals(array('Django', 'RubyOnRails', 'Sinatra'), $newerThanPHPPosts);
 
 
         // Correlated subqueries using EXISTS
@@ -262,7 +262,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->order('Category.name ASC')
             ->invoke('extract', '/Category/name');
 
-        $this->assertEqual(array('PHP', 'Python', 'Ruby'), $hasPostsCategories);
+        $this->assertEquals(array('PHP', 'Python', 'Ruby'), $hasPostsCategories);
 
 
         // Subqueries in FROM clause
@@ -277,7 +277,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->__toString();
         $ret = $C->query($query->toSql());
 
-        $this->assertEqual(array(array(0 => array('max_posts' => 2))),
+        $this->assertEquals(array(array(0 => array('max_posts' => 2))),
                            $ret);
     }
 
@@ -296,18 +296,18 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         $ret = $C->finder('all', 'startsWithP')
             ->order('name ASC')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('Perl', 'PHP', 'Python'), $ret);
+        $this->assertEquals(array('Perl', 'PHP', 'Python'), $ret);
 
         $ret = $C->finder('all', 'startsWithP', 'flagOn')
             ->order('name ASC')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('PHP', 'Python'), $ret);
+        $this->assertEquals(array('PHP', 'Python'), $ret);
 
         $ret = $C->finder('all', 'startsWithP')
             ->order('name ASC')
             ->import('limit2')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('Perl', 'PHP'), $ret);
+        $this->assertEquals(array('Perl', 'PHP'), $ret);
 
         
         $ret = $P->finder('all', 'withCategory')->order('Post.created DESC')->invoke();
@@ -323,7 +323,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         foreach($expected as $i => $row) {
             foreach($row as $model => $values) {
                 foreach($values as $k => $v) {
-                    $this->assertEqual($v, $ret[$i][$model][$k]);
+                    $this->assertEquals($v, $ret[$i][$model][$k]);
                 }
             }
         }
@@ -346,21 +346,21 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ->startsWith('P')
             ->order('name ASC')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('Perl', 'PHP', 'Python'), $ret);
+        $this->assertEquals(array('Perl', 'PHP', 'Python'), $ret);
 
         $ret = $C->finder('all')
             ->startsWith('P')
             ->flagOn()
             ->order('name ASC')
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('PHP', 'Python'), $ret);
+        $this->assertEquals(array('PHP', 'Python'), $ret);
 
         $ret = $C->finder('all')
             ->startsWith('P')
             ->order('name ASC')
             ->limit2()
             ->invoke('extract', '/Category/name');
-        $this->assertEqual(array('Perl', 'PHP'), $ret);
+        $this->assertEquals(array('Perl', 'PHP'), $ret);
 
         
         $ret = $P->finder('all')->withCategory()->order('Post.created DESC')->invoke();
@@ -376,7 +376,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         foreach($expected as $i => $row) {
             foreach($row as $model => $values) {
                 foreach($values as $k => $v) {
-                    $this->assertEqual($v, $ret[$i][$model][$k]);
+                    $this->assertEquals($v, $ret[$i][$model][$k]);
                 }
             }
         }

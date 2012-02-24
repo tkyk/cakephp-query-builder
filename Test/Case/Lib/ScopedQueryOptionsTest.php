@@ -24,18 +24,18 @@ class ScopedQueryOptionsTest extends CakeTestCase {
     }
 
     function testGetScope() {
-        $this->assertIdentical($this->scope, $this->options->getScope());
+        $this->assertSame($this->scope, $this->options->getScope());
     }
 
     function testCall() {
         $a = $this->options;
 
         $ret = $a->method1();
-        $this->assertIdentical($a, $ret);
-        $this->assertIdentical($this->scope->method1Args, array($a));
+        $this->assertSame($a, $ret);
+        $this->assertSame($this->scope->method1Args, array($a));
 
         $ret = $a->method2(1, 'aa');
-        $this->assertIdentical($a, $ret);
-        $this->assertIdentical($this->scope->method2Args, array($a, 1, 'aa'));
+        $this->assertSame($a, $ret);
+        $this->assertSame($this->scope->method2Args, array($a, 1, 'aa'));
     }
 }

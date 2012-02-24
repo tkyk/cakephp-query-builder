@@ -95,7 +95,7 @@ class ModelActingAsQueryBuilderStub {
                                         => array('status' => 'approved')));
 
         foreach($model->queryOptions as $name => $arr) {
-            $this->assertEqual($arr,
+            $this->assertEquals($arr,
                                $this->f->getQueryOptions($model, $name));
         }
     }
@@ -133,10 +133,10 @@ class ModelActingAsQueryBuilderStub {
         $args = array('all', 'custom');
 
         $finder = $this->f->createQueryMethod($model, $method, $args);
-        $this->assertIsA($finder, 'QueryMethod');
-        $this->assertIdentical($method, $finder->getMethod());
-        $this->assertIdentical($model, $finder->getTarget());
-        $this->assertIdentical($args, $finder->getAllArguments());
+        $this->assertInstanceOf('QueryMethod', $finder);
+        $this->assertSame($method, $finder->getMethod());
+        $this->assertSame($model, $finder->getTarget());
+        $this->assertSame($args, $finder->getAllArguments());
     }
 
     function testFinder() {
@@ -150,7 +150,7 @@ class ModelActingAsQueryBuilderStub {
 			->will($this->returnValue($returnObj));
 
         $finder = $this->f->finder($model, $type);
-        $this->assertIdentical($returnObj, $finder);
+        $this->assertSame($returnObj, $finder);
     }
 
     function testFinder_QueryOptions() {
@@ -175,7 +175,7 @@ class ModelActingAsQueryBuilderStub {
 			->with(array_keys($model->queryOptions));
 
         $finder = $this->f->finder($model, $type, 'common', 'approved');
-        $this->assertIdentical($returnObj, $finder);
+        $this->assertSame($returnObj, $finder);
     }
 
     function testFinder_Attached() {
@@ -188,22 +188,22 @@ class ModelActingAsQueryBuilderStub {
             ->User_created('>', '2010-01-01')
             ->limit(20);
 
-        $this->assertIsA($f, 'QueryMethod');
-        $this->assertIdentical(array('all'), $f->args);
-        $this->assertIdentical(array('id', 'title'), $f->fields);
-        $this->assertIdentical('id ASC', $f->order);
-        $this->assertIdentical(array('User.id' => 3,
+        $this->assertInstanceOf('QueryMethod', $f);
+        $this->assertSame(array('all'), $f->args);
+        $this->assertSame(array('id', 'title'), $f->fields);
+        $this->assertSame('id ASC', $f->order);
+        $this->assertSame(array('User.id' => 3,
                                      'User.created >' => '2010-01-01'),
                                $f->conditions);
-        $this->assertIdentical(20, $f->limit);
+        $this->assertSame(20, $f->limit);
 
         $f2 = $model->finder('first', 'more', 'approved')
             ->conditions('title IS NOT NULL');
-        $this->assertIsA($f2, 'QueryMethod');
-        $this->assertIdentical(array('status' => 'approved',
+        $this->assertInstanceOf('QueryMethod', $f2);
+        $this->assertSame(array('status' => 'approved',
                                      'title IS NOT NULL'),
                                $f2->conditions);
-        $this->assertIdentical(100, $f2->limit);
+        $this->assertSame(100, $f2->limit);
         
     }
 
@@ -216,17 +216,17 @@ class ModelActingAsQueryBuilderStub {
             ->approved()
             ->fields('id', 'title');
 
-        $this->assertIsA($f, 'QueryMethod');
-        $this->assertIdentical($model, $f->getScope());
-        $this->assertIdentical(array('all'), $f->args);
-        $this->assertIdentical(array('id', 'title'), $f->fields);
-        $this->assertIdentical(100, $f->limit);
-        $this->assertIdentical('created ASC', $f->order);
-        $this->assertIdentical(array('status' => 'approved'),
+        $this->assertInstanceOf('QueryMethod', $f);
+        $this->assertSame($model, $f->getScope());
+        $this->assertSame(array('all'), $f->args);
+        $this->assertSame(array('id', 'title'), $f->fields);
+        $this->assertSame(100, $f->limit);
+        $this->assertSame('created ASC', $f->order);
+        $this->assertSame(array('status' => 'approved'),
                                $f->conditions);
 
         $f2 = $model->finder('all')->combined()->fields('id', 'title');
-        $this->assertEqual($f->getOptions(), $f2->getOptions());
+        $this->assertEquals($f->getOptions(), $f2->getOptions());
     }
 
 
@@ -247,9 +247,9 @@ class ModelActingAsQueryBuilderStub {
         $ret = $model->execPaginate($c, $options);
         $afterPaginateArr = $c->settings;
 
-        $this->assertIdentical(array(1,2,3), $ret);
+        $this->assertSame(array(1,2,3), $ret);
 
-        $this->assertIdentical($afterPaginateArr,
+        $this->assertSame($afterPaginateArr,
                                am($prevPaginateArr,
                                   array($alias => $options)));
     }
@@ -265,7 +265,7 @@ class ModelActingAsQueryBuilderStub {
 			->will($this->returnValue($returnObj));
 
         $finder = $this->f->paginator($model, $c);
-        $this->assertIdentical($returnObj, $finder);
+        $this->assertSame($returnObj, $finder);
     }
 
     function testPaginator_queryOptions() {
@@ -290,7 +290,7 @@ class ModelActingAsQueryBuilderStub {
 			->with(array_keys($model->queryOptions));
 
         $finder = $this->f->paginator($model, $c, 'common', 'approved');
-        $this->assertIdentical($returnObj, $finder);
+        $this->assertSame($returnObj, $finder);
     }
 
     function testPaginator_usingQueryMethod() {
@@ -315,14 +315,14 @@ class ModelActingAsQueryBuilderStub {
             ->limit(50)
             ->order('User.name ASC')
             ->User_title('like', 'abc%');
-        $this->assertIdentical($model, $p->getTarget());
-        $this->assertIdentical($model, $p->getScope());
+        $this->assertSame($model, $p->getTarget());
+        $this->assertSame($model, $p->getScope());
         $result = $p->invoke();
         $afterPaginateArr = $c->settings;
 
-        $this->assertIdentical(array(1,2,3), $ret);
+        $this->assertSame(array(1,2,3), $ret);
 
-        $this->assertIdentical($afterPaginateArr,
+        $this->assertSame($afterPaginateArr,
                                am($prevPaginateArr,
                                   array($alias => $options)));
     }
@@ -331,48 +331,48 @@ class ModelActingAsQueryBuilderStub {
         $model = new TestModelForQueryBuilderTestCase();
 
         $q = $model->subquery();
-        $this->assertIsA($q, 'SubqueryExpression');
+        $this->assertInstanceOf('SubqueryExpression', $q);
         $this->assertNull($q->table);
         $this->assertNull($q->alias);
 
         $q = $model->subquery('users', 'User2');
-        $this->assertIsA($q, 'SubqueryExpression');
-        $this->assertIdentical('users', $q->table);
-        $this->assertIdentical('User2', $q->alias);
+        $this->assertInstanceOf('SubqueryExpression', $q);
+        $this->assertSame('users', $q->table);
+        $this->assertSame('User2', $q->alias);
 
         $q = $model->subquery('User2', 'users');
-        $this->assertIsA($q, 'SubqueryExpression');
-        $this->assertIdentical('users', $q->table);
-        $this->assertIdentical('User2', $q->alias);
+        $this->assertInstanceOf('SubqueryExpression', $q);
+        $this->assertSame('users', $q->table);
+        $this->assertSame('User2', $q->alias);
 
         $q = $model->subquery('User2', 'User');
-        $this->assertIsA($q, 'SubqueryExpression');
+        $this->assertInstanceOf('SubqueryExpression', $q);
         $this->assertNull($q->table);
-        $this->assertIdentical('User', $q->alias);
+        $this->assertSame('User', $q->alias);
 
         $q = $model->subquery('users', 'groups_users');
-        $this->assertIsA($q, 'SubqueryExpression');
-        $this->assertIdentical('groups_users', $q->table);
+        $this->assertInstanceOf('SubqueryExpression', $q);
+        $this->assertSame('groups_users', $q->table);
         $this->assertNull($q->alias);
 
         $q = $model->subquery('User');
-        $this->assertIsA($q, 'SubqueryExpression');
+        $this->assertInstanceOf('SubqueryExpression', $q);
         $this->assertNull($q->table);
-        $this->assertIdentical('User', $q->alias);
+        $this->assertSame('User', $q->alias);
 
         $q = $model->subquery(null, 'User');
-        $this->assertIsA($q, 'SubqueryExpression');
+        $this->assertInstanceOf('SubqueryExpression', $q);
         $this->assertNull($q->table);
-        $this->assertIdentical('User', $q->alias);
+        $this->assertSame('User', $q->alias);
 
         $q = $model->subquery('groups_users');
-        $this->assertIsA($q, 'SubqueryExpression');
-        $this->assertIdentical('groups_users', $q->table);
+        $this->assertInstanceOf('SubqueryExpression', $q);
+        $this->assertSame('groups_users', $q->table);
         $this->assertNull($q->alias);
 
         $q = $model->subquery(null, 'groups_users');
-        $this->assertIsA($q, 'SubqueryExpression');
-        $this->assertIdentical('groups_users', $q->table);
+        $this->assertInstanceOf('SubqueryExpression', $q);
+        $this->assertSame('groups_users', $q->table);
         $this->assertNull($q->alias);
 
     }

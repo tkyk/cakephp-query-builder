@@ -29,30 +29,30 @@ class QueryMethodTestCase extends CakeTestCase {
     }
 
     function testInit() {
-        $this->assertIdentical($this->method, $this->query->getMethod());
-        $this->assertIdentical($this->model, $this->query->getTarget());
-        $this->assertIdentical($this->model, $this->query->getScope());
-        $this->assertIdentical($this->model->alias, $this->query->getAlias());
-        $this->assertIdentical($this->args, $this->query->args);
+        $this->assertSame($this->method, $this->query->getMethod());
+        $this->assertSame($this->model, $this->query->getTarget());
+        $this->assertSame($this->model, $this->query->getScope());
+        $this->assertSame($this->model->alias, $this->query->getAlias());
+        $this->assertSame($this->args, $this->query->args);
     }
 
     function testArgs() {
         $q = new QueryMethod($this->model, $this->method);
-        $this->assertIdentical(array(), $q->args);
+        $this->assertSame(array(), $q->args);
 
-        $this->assertIdentical($q, $q->args(1, 2, array('k' => 'v')));
-        $this->assertIdentical(array(1, 2, array('k' => 'v')), $q->args);
+        $this->assertSame($q, $q->args(1, 2, array('k' => 'v')));
+        $this->assertSame(array(1, 2, array('k' => 'v')), $q->args);
 
         $q->args('a', 'b');
-        $this->assertIdentical(array('a', 'b'), $q->args);
+        $this->assertSame(array('a', 'b'), $q->args);
 
         $q->args();
-        $this->assertIdentical(array(), $q->args);
+        $this->assertSame(array(), $q->args);
     }
 
     function testGetAllArguments() {
         list($a, $method, $args) = $this->defaultObj();
-        $this->assertEqual($args, $a->getAllArguments());
+        $this->assertEquals($args, $a->getAllArguments());
 
         $options = array('conditions' => 'deleted is null',
                          'order' => array('id asc', 'created desc'));
@@ -60,7 +60,7 @@ class QueryMethodTestCase extends CakeTestCase {
 
         $a->setOption('conditions', $options['conditions']);
         $a->setOption('order', $options['order']);
-        $this->assertEqual($allArgs, $a->getAllArguments());
+        $this->assertEquals($allArgs, $a->getAllArguments());
     }
 
     function testPrintArgs() {
@@ -86,7 +86,7 @@ class QueryMethodTestCase extends CakeTestCase {
 			->method($func)
 			->with($allArgs);
 
-        $this->assertIdentical($a, $a->printArgs($cb));
+        $this->assertSame($a, $a->printArgs($cb));
         $a->setOption('conditions', $options['conditions']);
         $a->setOption('order', $options['order']);
         $a->printArgs($cb);
@@ -108,7 +108,7 @@ class QueryMethodTestCase extends CakeTestCase {
 			->with($method, $allArgs)
 			->will($this->returnValue(true));
 
-        $this->assertIdentical(array(1,2,3), $a->invoke());
+        $this->assertSame(array(1,2,3), $a->invoke());
 
         $a->setOption('conditions', $options['conditions']);
         $a->setOption('order', $options['order']);
@@ -148,13 +148,13 @@ class QueryMethodTestCase extends CakeTestCase {
 			->with($method, $args)
 			->will($this->returnValue($result));
 
-        $this->assertIdentical(1, $a->invoke('extract', $extractParams[0]));
-        $this->assertIdentical(2, $a->invoke('combine', $combineParams[0], $combineParams[1]));
+        $this->assertSame(1, $a->invoke('extract', $extractParams[0]));
+        $this->assertSame(2, $a->invoke('combine', $combineParams[0], $combineParams[1]));
     }
 
     function testCallAlias() {
         $this->query->Alias_id(3);
-        $this->assertEqual(array($this->model->alias .".id" => 3),
+        $this->assertEquals(array($this->model->alias .".id" => 3),
                            $this->query->conditions);
 
     }
@@ -186,14 +186,14 @@ class QueryMethodTestCase extends CakeTestCase {
         }
 
         if($useArray) {
-            $this->assertIdentical($a, $a->import(array('common', 'approved')));
+            $this->assertSame($a, $a->import(array('common', 'approved')));
         } else {
-            $this->assertIdentical($a, $a->import('common', 'approved'));
+            $this->assertSame($a, $a->import('common', 'approved'));
         }
 
-        $this->assertIdentical($imports['approved']['limit'], $a->limit);
-        $this->assertIdentical($imports['common']['order'], $a->order);
-        $this->assertIdentical(am($imports['common']['conditions'],
+        $this->assertSame($imports['approved']['limit'], $a->limit);
+        $this->assertSame($imports['common']['order'], $a->order);
+        $this->assertSame(am($imports['common']['conditions'],
                                   $imports['approved']['conditions']),
                                $a->conditions);
 
