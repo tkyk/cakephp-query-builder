@@ -34,26 +34,20 @@
 App::import('Lib', 'QueryBuilder.QueryOptions');
 
 /**
+ * QueryBuilderMissingNamedOptionsException
+ *
+ * @package QueryBuilder
+ */
+class QueryBuilderMissingNamedOptionsException extends CakeException {
+	protected $_messageTEmplate = 'Query options named %s is missing in model %s.';
+}
+
+/**
  * QueryBuilderBehavior class
  * 
  * @package QueryBuilder
  */
 class QueryBuilderBehavior extends ModelBehavior {
-
-/**
- * @var array
- */
-	public $errorTemplate = array('code' => 500,
-		'name' => 'Missing Query Options');
-
-/**
- * This method is public but not available through the Models.
- * 
- * @param string  config name
- */
-	public function _missingOptionsError($name) {
-		return $this->errorTemplate + array('message' => $name);
-	}
 
 /**
  * Returns a query options array named $name
@@ -67,7 +61,10 @@ class QueryBuilderBehavior extends ModelBehavior {
 			!isset($model->queryOptions[$name]) ||
 			!is_array($model->queryOptions[$name])
 		) {
-			$model->cakeError('error', $this->_missingOptionsError($name));
+			throw new QueryBuilderMissingNamedOptionsException(array(
+				'name' => $name,
+				'model' => get_class($this)
+			));
 			return;
 		}
 		return $model->queryOptions[$name];

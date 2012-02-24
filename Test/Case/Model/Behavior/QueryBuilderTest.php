@@ -1,9 +1,20 @@
 <?php
 
 App::import('Behavior', 'QueryBuilder.QueryBuilder');
+App::uses('Model', 'Model');
+App::uses('Controller', 'Controller');
+/*
 Mock::generate('Model', 'MockActsAsQueryBuilder', array('createQueryMethod'));
 Mock::generate('Controller');
 Mock::generate('QueryMethod');
+ */
+
+
+class ControllerPaginatorStub {
+	public $paginate = array();
+	public function paginate() {
+	}
+}
 
 class TestModelForQueryBuilderTestCase extends Model {
     var $useTable = false;
@@ -33,14 +44,49 @@ class TestModelForQueryBuilderTestCase extends Model {
 }
 
 class QueryBuilderTestCase extends CakeTestCase {
-    var $f;
+    public $f;
+	public $mockActor, $mockQueryMethod, $mockCtrl;
 
-    function startTest() {
+	/*
+	 * Generating a class who has all the public methods defined in the Behavior
+	 */
+	private static function _generateActorClass() {
+		$code = '
+class ModelActingAsQueryBuilderStub {
+	public $alias = "ModelStub";
+	%s
+}
+';
+		$methods = get_class_methods('QueryBuilderBehavior');
+		$methodCode = "";
+		foreach($methods as $m) {
+			if(!preg_match('/^_/', $m)) {
+				$methodCode.= sprintf("function %s(){}\n", $m);
+			}
+		}
+		$code = sprintf($code, $methodCode);
+		return $code;
+	}
+
+	public static function setUpBeforeClass() {
+		eval(self::_generateActorClass());
+	}
+
+    function setUp() {
+		parent::setUp();
         $this->f = new QueryBuilderBehavior();
+		$this->mockQueryMethod = $this->getMockBuilder('QueryMethod')
+			->disableOriginalConstructor()
+			->getMock();
+		$this->mockActor = $this->getMock('ModelActingAsQueryBuilderStub');
+		$this->mockCtrl = $this->getMockBuilder('ControllerPaginatorStub')
+			->disableOriginalConstructor()
+			->getMock();
     }
 
-    function endTest() {
+    function tearDown() {
         ClassRegistry::flush();
+		parent::tearDown();
     }
 
     function testInit() {
@@ -49,7 +95,7 @@ class QueryBuilderTestCase extends CakeTestCase {
     function testGetQueryOptions() {
         $model = new stdClass;
         $model->queryOptions
-            = array('default' => array('fields' => a('id', 'title'),
+            = array('default' => array('fields' => array('id', 'title'),
                                        'limit' => 50),
                     'approved' => array('conditions'
                                         => array('status' => 'approved')));
@@ -60,24 +106,32 @@ class QueryBuilderTestCase extends CakeTestCase {
         }
     }
 
-    function testGetQueryOptions_Error() {
-        $key = 'no_such_key';
+    function _testGetQueryOptions_Error($key, $opts) {
+		$model = new TestModelForQueryBuilderTestCase();
+		$model->queryOptions = $opts;
 
-        $expectedError = $this->f->_missingOptionsError($key);
-
-        $model = new MockActsAsQueryBuilder;
-        $model->expectCallCount('cakeError', 3);
-        $model->expect('cakeError', array('error', $expectedError));
-
-        $this->assertNull($this->f->getQueryOptions($model, $key));
-
-        $model->queryOptions = array('foo' => 'bar');
-        $this->assertNull($this->f->getQueryOptions($model, $key));
-
-        // found but not an array
-        $model->queryOptions = array($key => null);
-        $this->assertNull($this->f->getQueryOptions($model, $key));
+		try {
+			$this->f->getQueryOptions($model, $key);
+		}
+		catch(QueryBuilderMissingNamedOptionsException $e) {
+			$this->assertRegExp("/$key/", strval($e));
+			$this->assertRegExp("/" . get_class($model) . "/", strval($e));
+			return;
+		}
+		$this->fail("An expected exception has not been thrown.");
     }
+
+	function testGetQueryOptions_InvalidOptionValue() {
+		$key = "exist_but_noarr";
+		$this->_testGetQueryOptions_Error(
+			$key,
+			array($key => "yyy")
+		);
+	}
+
+	function testGetQueryOptions_MissingError() {
+		$this->_testGetQueryOptions_Error("no_such_key", array("xxx" => "yyy"));
+	}
 
     function testCreateQueryMethod() {
         $model = new stdClass;
@@ -95,10 +149,11 @@ class QueryBuilderTestCase extends CakeTestCase {
         $type = 'all';
         $returnObj = new stdClass;
 
-        $model = new MockActsAsQueryBuilder;
-        $model->expectOnce('createQueryMethod',
-                           array('find', array($type)));
-        $model->setReturnValue('createQueryMethod', $returnObj);
+        $model = $this->mockActor;
+		$model->expects($this->once())
+			->method('createQueryMethod')
+			->with('find', array($type))
+			->will($this->returnValue($returnObj));
 
         $finder = $this->f->finder($model, $type);
         $this->assertIdentical($returnObj, $finder);
@@ -107,8 +162,8 @@ class QueryBuilderTestCase extends CakeTestCase {
     function testFinder_QueryOptions() {
         $type = 'all';
 
-        $returnObj = new MockQueryMethod;
-        $model = new MockActsAsQueryBuilder;
+        $returnObj = $this->mockQueryMethod;
+        $model = $this->mockActor;
 
         // setup Mocks
         $model->queryOptions
@@ -117,12 +172,13 @@ class QueryBuilderTestCase extends CakeTestCase {
                                       'conditions' => 'id NOT NULL'),
                     'approved' => array('conditions' => array('status' => 'approved'),
                                         'limit' => 100));
-        $model->expectOnce('createQueryMethod',
-                           array('find', array($type)));
-        $model->setReturnValue('createQueryMethod', $returnObj);
-
-        $returnObj->expectOnce('import', array(array_keys($model->queryOptions)));
-
+		$model->expects($this->once())
+			->method('createQueryMethod')
+			->with('find', array($type))
+			->will($this->returnValue($returnObj));
+		$returnObj->expects($this->once())
+			->method('import')
+			->with(array_keys($model->queryOptions));
 
         $finder = $this->f->finder($model, $type, 'common', 'approved');
         $this->assertIdentical($returnObj, $finder);
@@ -181,15 +237,21 @@ class QueryBuilderTestCase extends CakeTestCase {
 
 
     function testExecPaginate() {
-        $c = new MockController();
+        $c = $this->mockCtrl;
         $model = new TestModelForQueryBuilderTestCase();
 
         $alias = $model->alias;
         $options = array('limit' => 50,
                          'order' => 'User.name ASC');
 
+		$c->expects($this->once())
+			->method('paginate')
+			->with($alias)
+			->will($this->returnValue(array(1,2,3)));
+		/*
         $c->expectOnce('paginate', array($alias));
         $c->setReturnValue('paginate', array(1,2,3), array($alias));
+		 */
 
         $prevPaginateArr = $c->paginate;
         $ret = $model->execPaginate($c, $options);
@@ -203,22 +265,23 @@ class QueryBuilderTestCase extends CakeTestCase {
     }
 
     function testPaginator() {
-        $c = new MockController;
+        $c = $this->mockCtrl;
         $returnObj = new stdClass;
 
-        $model = new MockActsAsQueryBuilder;
-        $model->expectOnce('createQueryMethod',
-                           array('execPaginate', array($c)));
-        $model->setReturnValue('createQueryMethod', $returnObj);
+        $model = $this->mockActor;
+		$model->expects($this->once())
+			->method('createQueryMethod')
+			->with('execPaginate', array($c))
+			->will($this->returnValue($returnObj));
 
         $finder = $this->f->paginator($model, $c);
         $this->assertIdentical($returnObj, $finder);
     }
 
     function testPaginator_queryOptions() {
-        $c = new MockController;
-        $returnObj = new MockQueryMethod;
-        $model = new MockActsAsQueryBuilder;
+        $c = $this->mockCtrl;
+        $returnObj = $this->mockQueryMethod;
+        $model = $this->mockActor;
 
         // setup Mocks
         $model->queryOptions
@@ -228,18 +291,20 @@ class QueryBuilderTestCase extends CakeTestCase {
                     'approved' => array('conditions' => array('status' => 'approved'),
                                         'limit' => 100));
 
-        $model->expectOnce('createQueryMethod',
-                           array('execPaginate', array($c)));
-        $model->setReturnValue('createQueryMethod', $returnObj);
-
-        $returnObj->expectOnce('import', array(array_keys($model->queryOptions)));
+		$model->expects($this->once())
+			->method('createQueryMethod')
+			->with('execPaginate', array($c))
+			->will($this->returnValue($returnObj));
+		$returnObj->expects($this->once())
+			->method('import')
+			->with(array_keys($model->queryOptions));
 
         $finder = $this->f->paginator($model, $c, 'common', 'approved');
         $this->assertIdentical($returnObj, $finder);
     }
 
     function testPaginator_usingQueryMethod() {
-        $c = new MockController();
+        $c = $this->mockCtrl;
         $model = new TestModelForQueryBuilderTestCase();
 
         $alias = $model->alias;
@@ -249,8 +314,10 @@ class QueryBuilderTestCase extends CakeTestCase {
 
         //setup Mock
         $ret = array(1,2,3);
-        $c->expectOnce('paginate', array($alias));
-        $c->setReturnValue('paginate', $ret, array($alias));
+		$c->expects($this->once())
+			->method('paginate')
+			->with($alias)
+			->will($this->returnValue($ret));
 
         //exec
         $prevPaginateArr = $c->paginate;
