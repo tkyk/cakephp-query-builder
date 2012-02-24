@@ -2,19 +2,13 @@
 
 App::import('Behavior', 'QueryBuilder.QueryBuilder');
 App::uses('Model', 'Model');
-App::uses('Controller', 'Controller');
+App::uses('Component', 'Controller');
+App::uses('PaginatorComponent', 'Controller/Component');
 /*
 Mock::generate('Model', 'MockActsAsQueryBuilder', array('createQueryMethod'));
 Mock::generate('Controller');
 Mock::generate('QueryMethod');
  */
-
-
-class ControllerPaginatorStub {
-	public $paginate = array();
-	public function paginate() {
-	}
-}
 
 class TestModelForQueryBuilderTestCase extends Model {
     var $useTable = false;
@@ -45,7 +39,7 @@ class TestModelForQueryBuilderTestCase extends Model {
 
 class QueryBuilderTestCase extends CakeTestCase {
     public $f;
-	public $mockActor, $mockQueryMethod, $mockCtrl;
+	public $mockActor, $mockQueryMethod, $mockComponent;
 
 	/*
 	 * Generating a class who has all the public methods defined in the Behavior
@@ -79,7 +73,7 @@ class ModelActingAsQueryBuilderStub {
 			->disableOriginalConstructor()
 			->getMock();
 		$this->mockActor = $this->getMock('ModelActingAsQueryBuilderStub');
-		$this->mockCtrl = $this->getMockBuilder('ControllerPaginatorStub')
+		$this->mockComponent = $this->getMockBuilder('PaginatorComponent')
 			->disableOriginalConstructor()
 			->getMock();
     }
@@ -237,7 +231,7 @@ class ModelActingAsQueryBuilderStub {
 
 
     function testExecPaginate() {
-        $c = $this->mockCtrl;
+        $c = $this->mockComponent;
         $model = new TestModelForQueryBuilderTestCase();
 
         $alias = $model->alias;
@@ -248,14 +242,10 @@ class ModelActingAsQueryBuilderStub {
 			->method('paginate')
 			->with($alias)
 			->will($this->returnValue(array(1,2,3)));
-		/*
-        $c->expectOnce('paginate', array($alias));
-        $c->setReturnValue('paginate', array(1,2,3), array($alias));
-		 */
 
-        $prevPaginateArr = $c->paginate;
+        $prevPaginateArr = $c->settings;
         $ret = $model->execPaginate($c, $options);
-        $afterPaginateArr = $c->paginate;
+        $afterPaginateArr = $c->settings;
 
         $this->assertIdentical(array(1,2,3), $ret);
 
@@ -265,7 +255,7 @@ class ModelActingAsQueryBuilderStub {
     }
 
     function testPaginator() {
-        $c = $this->mockCtrl;
+        $c = $this->mockComponent;
         $returnObj = new stdClass;
 
         $model = $this->mockActor;
@@ -279,7 +269,7 @@ class ModelActingAsQueryBuilderStub {
     }
 
     function testPaginator_queryOptions() {
-        $c = $this->mockCtrl;
+        $c = $this->mockComponent;
         $returnObj = $this->mockQueryMethod;
         $model = $this->mockActor;
 
@@ -304,7 +294,7 @@ class ModelActingAsQueryBuilderStub {
     }
 
     function testPaginator_usingQueryMethod() {
-        $c = $this->mockCtrl;
+        $c = $this->mockComponent;
         $model = new TestModelForQueryBuilderTestCase();
 
         $alias = $model->alias;
@@ -320,7 +310,7 @@ class ModelActingAsQueryBuilderStub {
 			->will($this->returnValue($ret));
 
         //exec
-        $prevPaginateArr = $c->paginate;
+        $prevPaginateArr = $c->settings;
         $p = $model->paginator($c)
             ->limit(50)
             ->order('User.name ASC')
@@ -328,7 +318,7 @@ class ModelActingAsQueryBuilderStub {
         $this->assertIdentical($model, $p->getTarget());
         $this->assertIdentical($model, $p->getScope());
         $result = $p->invoke();
-        $afterPaginateArr = $c->paginate;
+        $afterPaginateArr = $c->settings;
 
         $this->assertIdentical(array(1,2,3), $ret);
 

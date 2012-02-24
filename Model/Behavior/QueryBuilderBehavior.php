@@ -14,7 +14,7 @@
  *   ->invoke();
  *
  * // objectified paginate
- * $Model->paginator($controller)
+ * $Model->paginator($controller->Paginator)
  *   ->fields('id', 'title')
  *   ->conditions('title IS NOT NULL')
  *   ->order('id ASC', 'title ASC')
@@ -106,31 +106,32 @@ class QueryBuilderBehavior extends ModelBehavior {
 	}
 
 /**
- * Wrapper method for the Controller->paginate method.
+ * Wrapper method for the PaginatorComponent->paginate method.
  * 
- * @param object  Controller
+ * @param Model
+ * @param PaginatorComponent
  * @param array   find-compatible options array
  * @return mixed
  */
-	public function execPaginate($model, $controller, $options=array()) {
-		$controller->paginate[$model->alias] = $options;
-		return $controller->paginate($model->alias);
+	public function execPaginate($model, PaginatorComponent $paginator, $options=array()) {
+		$paginator->settings[$model->alias] = $options;
+		return $paginator->paginate($model->alias);
 	}
 
 /**
  * An 'objectified' version of execPaginate method.
  * 
- * @param object  Model
- * @param object  Controller
+ * @param Model
+ * @param PaginatorComponent
  * @return QueryMethod
  */
-	public function paginator($model, $controller) {
-		$paginator = $model->createQueryMethod('execPaginate', array($controller));
+	public function paginator($model, PaginatorComponent $paginator) {
+		$queryMethod = $model->createQueryMethod('execPaginate', array($paginator));
 		if (func_num_args() > 2) {
 			$args = func_get_args();
-			$paginator->import(array_slice($args, 2));
+			$queryMethod->import(array_slice($args, 2));
 		}
-		return $paginator;
+		return $queryMethod;
 	}
 
 /**
