@@ -1,6 +1,9 @@
 <?php
 
 App::import('Behavior', 'QueryBuilder.QueryBuilder');
+App::uses('Model', 'Model');
+App::uses('Controller', 'Controller');
+App::uses('Router', 'Routing');
 
 class TestBaseModelForDbQueryBuilderTestCase extends Model {
     var $recursive = -1;
@@ -58,11 +61,18 @@ extends TestBaseModelForDbQueryBuilderTestCase {
     }
 }
 
+class TestControllerForQueryBuilderTestCase extends Controller {
+	public $components = array('Paginator');
+	public $paginate = array();
+}
+
 class DbQueryBuilderTestCase extends CakeTestCase {
     var $fixtures = array('plugin.query_builder.post', 'plugin.query_builder.category');
     var $Post, $Category;
 
-    function startTest() {
+
+    function setUp() {
+		parent::setUp();
         $this->Category =
             ClassRegistry::init(array('class' => 'TestCategoryForDbQueryBuilderTestCase',
                                       'alias' => 'Category',
@@ -72,12 +82,25 @@ class DbQueryBuilderTestCase extends CakeTestCase {
             ClassRegistry::init(array('class' => 'TestPostForDbQueryBuilderTestCase',
                                       'alias' => 'Post',
                                       'type' => 'Model'));
+		Router::connect('/:controller/:action/*');
     }
 
-    function endTest() {
+    function tearDown() {
         ClassRegistry::flush();
         unset($this->Post, $this->Category);
+		parent::tearDown();
     }
+
+	protected function _getController($url) {
+		$parseEnvironment = false; // Do not use $_GET, $_POST, etc.
+		$request = new CakeRequest($url, $parseEnvironment);
+		$params = Router::parse($request->url);
+		$request->addParams($params);
+
+		$ctrl = new TestControllerForQueryBuilderTestCase($request);
+		$ctrl->constructClasses();
+		return $ctrl;
+	}
 
     function _insertDefaultCategories() {
         $this->Category
@@ -150,25 +173,22 @@ class DbQueryBuilderTestCase extends CakeTestCase {
         }
         $this->assertEqual(26, $C->find('count'));
 
-
-        $cntl = new Controller();
+        $cntl = $this->_getController('/foo/bar');
         $cntl->loadModel('Category');
-        $cntl->params = array('url' => array('/'));
 
-        $paginator = $C->paginator($cntl)
+        $paginator = $C->paginator($cntl->Paginator)
             ->limit(3)
             ->order('name DESC');
-
         $ret = $paginator->invoke('extract', '/Category/name');
         $this->assertEqual(array('Z', 'Y', 'X'), $ret);
 
-        $cntl->params = array('url' => array('/'),
-                              'page' => 2);
+
+		$cntl->request->params['named']['page'] = 2;
         $ret = $paginator->invoke('extract', '/Category/name');
         $this->assertEqual(array('W', 'V', 'U'), $ret);
 
 
-        $ret = $C->paginator($cntl)
+        $ret = $C->paginator($cntl->Paginator)
             ->Alias_flag(1)
             ->limit(3)
             ->order('name ASC')
@@ -291,7 +311,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
 
         
         $ret = $P->finder('all', 'withCategory')->order('Post.created DESC')->invoke();
-        $expected = a(array('Category' => array('id' => $ids['Python'],
+        $expected = array(array('Category' => array('id' => $ids['Python'],
                                                 'name' => 'Python'),
                             'Post' => array('title' => 'Python3',
                                             'created' => '2010-02-02')),
@@ -344,7 +364,7 @@ class DbQueryBuilderTestCase extends CakeTestCase {
 
         
         $ret = $P->finder('all')->withCategory()->order('Post.created DESC')->invoke();
-        $expected = a(array('Category' => array('id' => $ids['Python'],
+        $expected = array(array('Category' => array('id' => $ids['Python'],
                                                 'name' => 'Python'),
                             'Post' => array('title' => 'Python3',
                                             'created' => '2010-02-02')),
