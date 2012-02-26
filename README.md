@@ -1,41 +1,72 @@
-# QueryBuilder Behavior
+QueryBuilder Behavior
+=====================================
 
-This behavior provides a step-by-step interface to build find options.
+An Object-Oriented way to build find queries.
 
-## Requirements
 
-- CakePHP 1.3
-- PHP 5.1 or later
+Requirements
+------------------------------
 
-## Installation 
+- CakePHP 2.0
+- PHP 5.3 or later
 
-    cd app/plugins
-    git clone git://github.com/tkyk/cakephp-query-builder.git query_builder
 
-## Usage
+Installation 
+------------------------------
 
-QueryBuilderBehavior provides `finder` method to build and invoke a find operation.
+    cd app/Plugin
+    git clone git://github.com/tkyk/cakephp-query-builder.git QueryBuilder
 
-    // method-chain style
+I recommend you to checkout a versioning tag rather than a development branch.
+
+	cd app/Plugin/QueryBuilder
+	git checkout x.y.z.w
+
+
+The `finder` method
+------------------------------
+
+This behavior provides `finder` method, which encapsulates a `find` call and its options.
+
+    $findAll = $Model->finder('all');
+	$findFirst = $Model->finder('first');
+	$findCustom = $Model->finder('custom_find');
+
+You can set and update the options by assigning its properties.
+
+    $findAll->fields = array('id', 'title');
+    $findAll->conditions = array('Model.title like' => '%abc');
+    $findAll->order = array('id ASC', 'created ASC');
+    $findAll->limit = 10;
+
+Then you can `invoke` the find operation.
+
+    $results = $findAll->invoke();
+
+And `Set::*` methods can be applied to the find results.
+
+	// This is equivalent to Set::extract($Model->find('all', ...), '/Model/title')
+	$titles = $findAll->invoke('extract', '/Model/title');
+
+
+In addition to the property style assignments described above,
+method chain style is also supported to set and update the options.
+
     $results = $Model->finder('all')
       ->fields('id', 'title')
       ->Model_title('like', '%abc')
       ->order('id ASC', 'created ASC')
       ->limit(10)
       ->invoke();
-    
-    // property style
-    $f = $Model->finder('all');
-    $f->fields = array('id', 'title');
-    $f->conditions = array('Model.title like' => '%abc');
-    $f->order = array('id ASC', 'created ASC');
-    $f->limit = 10;
-    $results = $f->invoke();
 
-The similar methods `paginator` and `subquery` are for pagination and subqueries, respectively.
+
+Pagination and Subquery
+------------------------------
+
+The similar methods `paginator` and `subquery` are provided for pagination and subqueries, respectively.
 
     // pagination
-    $results = $Model->paginator($Controller)
+    $results = $Model->paginator($Controller->Paginator)
       ->fields('id', 'title')
       ->Model_title('like', '%abc')
       ->order('id ASC', 'created ASC')

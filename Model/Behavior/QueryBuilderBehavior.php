@@ -1,0 +1,157 @@
+<?php
+/**
+ * QueryBuilder Behavior
+ * providing a step-by-step interface to build find options.
+ * 
+ * <code>
+ * // objectified find
+ * $Model->finder('all')
+ *   ->fields('id', 'title')
+ *   ->Model_group_id(100)
+ *   ->Model_title('LIKE', 'var')
+ *   ->order('created DESC')
+ *   ->limit(10)
+ *   ->invoke();
+ *
+ * // objectified paginate
+ * $Model->paginator($controller->Paginator)
+ *   ->fields('id', 'title')
+ *   ->conditions('title IS NOT NULL')
+ *   ->order('id ASC', 'title ASC')
+ *   ->invoke();
+ * 
+ * // subquery object
+ * $q = $Model->subquery('users', 'User2')
+ *   ->fields('id')
+ *   ->User2_created('>' $time);
+ * </code>
+ * 
+ * @package QueryBuilder
+ * @copyright Copyright 2010, Takayuki Miwa http://github.com/tkyk/
+ * @license http://www.opensource.org/licenses/mit-license.php The MIT License
+ */
+
+App::import('Lib', 'QueryBuilder.QueryOptions');
+
+/**
+ * QueryBuilderMissingNamedOptionsException
+ *
+ * @package QueryBuilder
+ */
+class QueryBuilderMissingNamedOptionsException extends CakeException {
+	protected $_messageTEmplate = 'Query options named %s is missing in model %s.';
+}
+
+/**
+ * QueryBuilderBehavior class
+ * 
+ * @package QueryBuilder
+ */
+class QueryBuilderBehavior extends ModelBehavior {
+
+/**
+ * Returns a query options array named $name
+ * 
+ * @param string  option name
+ * @return array
+ */
+	public function getQueryOptions($model, $name) {
+		if (
+			!isset($model->queryOptions) ||
+			!isset($model->queryOptions[$name]) ||
+			!is_array($model->queryOptions[$name])
+		) {
+			throw new QueryBuilderMissingNamedOptionsException(array(
+				'name' => $name,
+				'model' => get_class($this)
+			));
+			return;
+		}
+		return $model->queryOptions[$name];
+	}
+
+/**
+ * An 'Objectified' version of find method.
+ * 
+ * <code>
+ * $finder = $Model->finder('all')->fields(...)->conditions(...);
+ * 
+ * // using query options
+ * $finder = $Model->finder('all', 'approved', 'normal_order')->limit(...);
+ * </code>
+ * 
+ * @param object  Model
+ * @param string  find type
+ * @return QueryMethod
+ */
+	public function finder($model, $type) {
+		$finder = $model->createQueryMethod('find', array($type));
+		if (func_num_args() > 2) {
+			$args = func_get_args();
+			$finder->import(array_slice($args, 2));
+		}
+		return $finder;
+	}
+
+/**
+ * Creates a new QueryMethod object bound to the $model.
+ * 
+ * @param object  Model
+ * @param string  method name
+ * @param array   arguments
+ * @return QueryMethod
+ */
+	public function createQueryMethod($model, $method, $args=array()) {
+		return new QueryMethod($model, $method, $args);
+	}
+
+/**
+ * Wrapper method for the PaginatorComponent->paginate method.
+ * 
+ * @param Model
+ * @param PaginatorComponent
+ * @param array   find-compatible options array
+ * @return mixed
+ */
+	public function execPaginate($model, PaginatorComponent $paginator, $options=array()) {
+		$paginator->settings[$model->alias] = $options;
+		return $paginator->paginate($model->alias);
+	}
+
+/**
+ * An 'objectified' version of execPaginate method.
+ * 
+ * @param Model
+ * @param PaginatorComponent
+ * @return QueryMethod
+ */
+	public function paginator($model, PaginatorComponent $paginator) {
+		$queryMethod = $model->createQueryMethod('execPaginate', array($paginator));
+		if (func_num_args() > 2) {
+			$args = func_get_args();
+			$queryMethod->import(array_slice($args, 2));
+		}
+		return $queryMethod;
+	}
+
+/**
+ * Creates a new SubqueryExpression object.
+ * 
+ * @param object  Model
+ * @param string  [optional] table name or alias
+ * @param string  [optional] table name or alias
+ * @return object  SubqueryExpression
+ */
+	public function subquery($model, $tableOrAlias=null, $tableOrAlias2=null) {
+		$exp = new SubqueryExpression($model);
+		if (is_string($tableOrAlias)) {
+			$exp->tableOrAlias($tableOrAlias);
+		}
+		if (is_string($tableOrAlias2)) {
+			$exp->tableOrAlias($tableOrAlias2);
+		}
+		return $exp;
+	}
+
+}
+
