@@ -2,6 +2,7 @@
 
 App::import('Behavior', 'QueryBuilder.QueryBuilder');
 App::uses('Model', 'Model');
+App::uses('Controller', 'Controller');
 App::uses('Component', 'Controller');
 App::uses('PaginatorComponent', 'Controller/Component');
 /*
