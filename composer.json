@@ -1,0 +1,15 @@
+{
+	"name": "tkyk/query-builder",
+	"type": "cakephp-plugin",
+	"description": "CakePHP behavior to perform queries by Object-Oriented way",
+	"keywords": ["cakephp"],
+	"homepage": "https://github.com/tkyk/cakephp-query-builder",
+	"license": "MIT",
+	"authors": [{
+		"name": "Takayuki Miwa",
+		"email": "i@tkyk.name"
+	}],
+	"require": {
+		"composer/installers": "*"
+	}
+}
